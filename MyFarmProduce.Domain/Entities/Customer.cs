@@ -10,5 +10,8 @@ public class Customer
     public bool IsAdmin { get; set; }
     public string? PhotoUrl { get; set; }
 
+    /// <summary>True until an admin-created user changes the default password on first login.</summary>
+    public bool MustChangePassword { get; set; }
+
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

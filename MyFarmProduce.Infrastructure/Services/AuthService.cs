@@ -43,4 +43,13 @@ public class AuthService : IAuthService
             return null;
         return customer;
     }
+
+    public async Task ChangePasswordAsync(int customerId, string newPassword)
+    {
+        var customer = await _db.Customers.FirstOrDefaultAsync(c => c.Id == customerId)
+            ?? throw new InvalidOperationException("Customer not found.");
+        customer.PasswordHash = _hasher.Hash(newPassword);
+        customer.MustChangePassword = false;
+        await _db.SaveChangesAsync();
+    }
 }

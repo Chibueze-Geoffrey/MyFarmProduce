@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyFarmProduce.Application.Interfaces;
+using MyFarmProduce.Common;
 using MyFarmProduce.Common.Enums;
 using MyFarmProduce.Domain.Entities;
 using MyFarmProduce.Infrastructure.Data;
@@ -31,7 +32,7 @@ public class UserAdminService : IUserAdminService
 
     public Task<Customer?> GetCustomerAsync(int id) => _db.Customers.FirstOrDefaultAsync(c => c.Id == id);
 
-    public async Task<Customer?> CreateCustomerAsync(string name, string email, string phone, string password)
+    public async Task<Customer?> CreateCustomerAsync(string name, string email, string phone)
     {
         email = email.Trim().ToLowerInvariant();
         if (await _db.Customers.AnyAsync(c => c.Email == email))
@@ -42,7 +43,8 @@ public class UserAdminService : IUserAdminService
             Name = name.Trim(),
             Email = email,
             Phone = phone.Trim(),
-            PasswordHash = _hasher.Hash(password)
+            PasswordHash = _hasher.Hash(AppConstants.DefaultUserPassword),
+            MustChangePassword = true
         };
         _db.Customers.Add(customer);
         await _db.SaveChangesAsync();

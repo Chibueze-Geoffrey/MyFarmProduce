@@ -234,25 +234,20 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    public IActionResult CreateUser() => View(new AdminUserFormViewModel());
+    public IActionResult CreateUser() => View("UserForm", new AdminUserFormViewModel());
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser(AdminUserFormViewModel model)
     {
         if (!ModelState.IsValid) return View("UserForm", model);
-        if (string.IsNullOrWhiteSpace(model.Password))
-        {
-            ModelState.AddModelError(nameof(model.Password), "Password is required for a new user.");
-            return View("UserForm", model);
-        }
 
-        var created = await _users.CreateCustomerAsync(model.Name, model.Email, model.Phone, model.Password);
+        var created = await _users.CreateCustomerAsync(model.Name, model.Email, model.Phone);
         if (created is null)
         {
             ModelState.AddModelError(nameof(model.Email), "That email is already registered.");
             return View("UserForm", model);
         }
-        TempData["Message"] = "User created.";
+        TempData["Message"] = $"User created. Default password: {AppConstants.DefaultUserPassword} (they'll be prompted to change it on first login).";
         return RedirectToAction(nameof(Users));
     }
 

@@ -28,10 +28,9 @@
             </div>
             @if (!isEdit)
             {
-                <div class="mb-3">
-                    <label asp-for="Password" class="form-label"></label>
-                    <input asp-for="Password" class="form-control" />
-                    <span asp-validation-for="Password" class="text-danger"></span>
+                <div class="alert alert-info">
+                    New users get the default password <strong>@MyFarmProduce.Common.AppConstants.DefaultUserPassword</strong>
+                    and must change it on first login.
                 </div>
             }
             <button type="submit" class="btn btn-success">Save</button>

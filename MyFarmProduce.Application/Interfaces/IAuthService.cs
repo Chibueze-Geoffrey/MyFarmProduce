@@ -9,4 +9,7 @@ public interface IAuthService
 
     /// <summary>Returns the customer if credentials are valid, otherwise null.</summary>
     Task<Customer?> ValidateCredentialsAsync(string email, string password);
+
+    /// <summary>Sets a new password and clears the must-change flag.</summary>
+    Task ChangePasswordAsync(int customerId, string newPassword);
 }

@@ -8,7 +8,8 @@ public interface IUserAdminService
     Task<List<Customer>> GetCustomersAsync(string? search = null);
     Task<Customer?> GetCustomerAsync(int id);
 
-    Task<Customer?> CreateCustomerAsync(string name, string email, string phone, string password);
+    /// <summary>Creates a user with the default password; they must change it on first login.</summary>
+    Task<Customer?> CreateCustomerAsync(string name, string email, string phone);
     Task UpdateCustomerAsync(int id, string name, string email, string phone);
     Task DeleteCustomerAsync(int id);
 

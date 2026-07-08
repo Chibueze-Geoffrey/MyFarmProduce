@@ -66,6 +66,9 @@ public class AccountController : Controller
 
         await SignInAsync(customer);
 
+        if (customer.MustChangePassword)
+            return RedirectToAction(nameof(ChangePassword));
+
         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return Redirect(model.ReturnUrl);
         return RedirectToAction("Index", "Catalog");
@@ -87,8 +90,32 @@ public class AccountController : Controller
             new(ClaimTypes.Email, customer.Email),
             new(ClaimTypes.Role, AppConstants.Roles.Customer)
         };
+        if (customer.MustChangePassword)
+            claims.Add(new Claim(AppConstants.Claims.MustChangePassword, "true"));
+
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+    }
+
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = AppConstants.Roles.Customer)]
+    [HttpGet]
+    public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
+
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = AppConstants.Roles.Customer)]
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var customerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _auth.ChangePasswordAsync(customerId, model.NewPassword);
+
+        // Re-issue the cookie without the must-change claim.
+        var customer = await _auth.ValidateCredentialsAsync(User.FindFirstValue(ClaimTypes.Email)!, model.NewPassword);
+        if (customer is not null) await SignInAsync(customer);
+
+        TempData["Message"] = "Password changed. Welcome!";
+        return RedirectToAction("Index", "Catalog");
     }
 
     private async Task SignInAdminAsync(Admin admin)
