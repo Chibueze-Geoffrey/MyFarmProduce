@@ -1,0 +1,25 @@
+@model MyFarmProduce.Domain.Entities.SupportTicket
+
+<div class="d-flex flex-column gap-2 mb-3">
+    @foreach (var m in Model.Messages.OrderBy(x => x.CreatedAt))
+    {
+        var mine = m.Sender == SupportSender.Customer;
+        var align = mine ? "align-self-end" : "align-self-start";
+        var bg = m.Sender switch
+        {
+            SupportSender.Customer => "bg-success text-white",
+            SupportSender.Assistant => "bg-body-secondary",
+            _ => "bg-warning-subtle"
+        };
+        var who = m.Sender switch
+        {
+            SupportSender.Customer => "You",
+            SupportSender.Assistant => "🤖 Assistant",
+            _ => "Admin"
+        };
+        <div class="@align" style="max-width:75%">
+            <div class="small text-muted @(mine ? "text-end" : "")">@who · @m.CreatedAt.ToLocalTime().ToString("t")</div>
+            <div class="rounded px-3 py-2 @bg">@m.Content</div>
+        </div>
+    }
+</div>

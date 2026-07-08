@@ -1,0 +1,72 @@
+@model Order
+@{
+    ViewData["Title"] = $"Order #{Model.Id}";
+    var steps = new[] { OrderStatus.Pending, OrderStatus.PaymentConfirmed, OrderStatus.Preparing, OrderStatus.OutForDelivery, OrderStatus.Delivered };
+    var currentIndex = Array.IndexOf(steps, Model.Status);
+    var cancelled = Model.Status == OrderStatus.Cancelled;
+}
+
+<h1 class="h3 mb-1">Order #@Model.Id</h1>
+<p class="text-muted">Placed @Model.CreatedAt.ToLocalTime().ToString("g")</p>
+
+@if (cancelled)
+{
+    <div class="alert alert-danger">This order was cancelled.</div>
+}
+else
+{
+    <div class="d-flex justify-content-between mb-4">
+        @foreach (var step in steps)
+        {
+            var idx = Array.IndexOf(steps, step);
+            var done = idx <= currentIndex;
+            <div class="text-center flex-fill">
+                <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center @(done ? "bg-success text-white" : "bg-light text-muted")" style="width:36px;height:36px">
+                    @(done ? "✓" : (idx + 1).ToString())
+                </div>
+                <small class="@(done ? "fw-bold" : "text-muted")">@step</small>
+            </div>
+        }
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <table class="table">
+            <thead><tr><th>Item</th><th class="text-center">Qty</th><th class="text-end">Price</th><th class="text-end">Total</th></tr></thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Product?.Name</td>
+                        <td class="text-center">@item.Quantity</td>
+                        <td class="text-end">₦@item.UnitPriceAtOrder.ToString("N2")</td>
+                        <td class="text-end">₦@((item.UnitPriceAtOrder * item.Quantity).ToString("N2"))</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr><td colspan="3" class="text-end">Subtotal</td><td class="text-end">₦@Model.Subtotal.ToString("N2")</td></tr>
+                <tr><td colspan="3" class="text-end">Delivery fee</td><td class="text-end">₦@Model.DeliveryFee.ToString("N2")</td></tr>
+                <tr class="fw-bold"><td colspan="3" class="text-end">Total</td><td class="text-end">₦@Model.Total.ToString("N2")</td></tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h6">Delivery</h2>
+                <p class="mb-1">@Model.DeliveryAddress</p>
+                <p class="mb-1 text-muted">@Model.Phone</p>
+                @if (!string.IsNullOrEmpty(Model.DeliveryNote))
+                {
+                    <p class="small text-muted mb-0">Note: @Model.DeliveryNote</p>
+                }
+            </div>
+        </div>
+        @if (Model.Status == OrderStatus.Pending)
+        {
+            <a asp-controller="Payment" asp-action="Pay" asp-route-id="@Model.Id" class="btn btn-success w-100 mt-3">Complete payment</a>
+        }
+    </div>
+</div>

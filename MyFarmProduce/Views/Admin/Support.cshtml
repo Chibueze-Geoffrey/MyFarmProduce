@@ -1,0 +1,25 @@
+@model List<SupportTicket>
+@{ ViewData["Title"] = "Support Tickets"; }
+
+<h1 class="h3 mb-4">Support Tickets</h1>
+
+@if (!Model.Any()) { <p class="text-muted">No support tickets yet.</p> }
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>#</th><th>Customer</th><th>Subject</th><th>Status</th><th>Opened</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var t in Model)
+            {
+                <tr>
+                    <td>@t.Id</td>
+                    <td>@t.Customer?.Name</td>
+                    <td>@t.Subject</td>
+                    <td><span class="badge bg-secondary">@t.Status</span></td>
+                    <td>@t.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td class="text-end"><a asp-action="Ticket" asp-route-id="@t.Id" class="btn btn-sm btn-outline-secondary">View</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

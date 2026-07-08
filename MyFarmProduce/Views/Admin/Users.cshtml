@@ -1,0 +1,47 @@
+@model List<Customer>
+@{ ViewData["Title"] = "Users"; var q = ViewData["Search"] as string; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Users</h1>
+    <a asp-action="CreateUser" class="btn btn-success">+ New user</a>
+</div>
+
+<form method="get" class="d-flex mb-3" role="search">
+    <input class="form-control me-2" type="search" name="q" value="@q" placeholder="Search name or email..." />
+    <button class="btn btn-outline-secondary" type="submit">Search</button>
+</form>
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th></th><th>Name</th><th>Email</th><th>Phone</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td style="width:48px">
+                        @if (!string.IsNullOrEmpty(c.PhotoUrl))
+                        {
+                            <img src="@c.PhotoUrl" class="rounded-circle" style="width:36px;height:36px;object-fit:cover" alt="" />
+                        }
+                        else
+                        {
+                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:36px;height:36px">@(c.Name.Length > 0 ? c.Name[0] : '?')</span>
+                        }
+                    </td>
+                    <td>@c.Name</td>
+                    <td>@c.Email</td>
+                    <td>@c.Phone</td>
+                    <td class="text-end">
+                        <a asp-action="EditUser" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <form asp-action="DeleteUser" method="post" class="d-inline" onsubmit="return confirm('Delete @c.Name?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@c.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@if (!Model.Any()) { <p class="text-muted">No users found.</p> }

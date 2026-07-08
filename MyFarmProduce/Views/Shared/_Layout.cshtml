@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - MyFarmProduce</title>
+    <script>
+        // Apply saved theme before paint to avoid a flash.
+        (function () {
+            var t = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/MyFarmProduce.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm bg-body-tertiary border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Catalog" asp-action="Index">🥬 MyFarmProduce</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    @{
+                        var isAdmin = User.IsInRole(AppConstants.Roles.Admin);
+                        var isCustomer = User.IsInRole(AppConstants.Roles.Customer);
+                    }
+                    <ul class="navbar-nav flex-grow-1">
+                        @if (!isAdmin)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Catalog" asp-action="Index">Shop</a></li>
+                        }
+                        @if (isCustomer)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Orders" asp-action="Index">My Orders</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Chat" asp-action="Index">💬 Community</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Support" asp-action="Index">🤖 Help</a></li>
+                        }
+                        @if (isAdmin)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Products">Products</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Orders">Orders</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">Users</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="ChangeRequests">Requests</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Support">Tickets</a></li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav align-items-center">
+                        <li class="nav-item">
+                            <button id="themeToggle" type="button" class="btn btn-sm btn-outline-secondary me-2" title="Toggle dark mode">🌓</button>
+                        </li>
+                        @if (!isAdmin)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Cart" asp-action="Index">🛒 Cart</a></li>
+                        }
+                        @if (isCustomer)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Profile" asp-action="Index">@User.Identity!.Name</a></li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-link nav-link">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else if (isAdmin)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Profile">@User.Identity!.Name (Admin)</a></li>
+                            <li class="nav-item">
+                                <form asp-controller="Admin" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-link nav-link">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Login</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Register">Register</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @if (TempData["Message"] is string flash)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    @flash
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - MyFarmProduce - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById('themeToggle')?.addEventListener('click', function () {
+            var root = document.documentElement;
+            var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-bs-theme', next);
+            localStorage.setItem('theme', next);
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

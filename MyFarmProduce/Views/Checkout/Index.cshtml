@@ -1,0 +1,43 @@
+@model CheckoutViewModel
+@{ ViewData["Title"] = "Checkout"; }
+
+<h1 class="h3 mb-4">Checkout</h1>
+
+<div class="row">
+    <div class="col-md-7">
+        <form asp-action="Index" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="DeliveryAddress" class="form-label"></label>
+                <textarea asp-for="DeliveryAddress" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="DeliveryAddress" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DeliveryNote" class="form-label"></label>
+                <textarea asp-for="DeliveryNote" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="DeliveryNote" class="text-danger"></span>
+            </div>
+            <p class="text-muted small">Delivery is same/next day — we'll confirm timing with you directly.</p>
+            <button type="submit" class="btn btn-success">Place order &amp; pay</button>
+        </form>
+    </div>
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h5">Order summary</h2>
+                <table class="table mb-0">
+                    <tr><td>Subtotal</td><td class="text-end">₦@Model.Subtotal.ToString("N2")</td></tr>
+                    <tr><td>Delivery fee</td><td class="text-end">₦@Model.DeliveryFee.ToString("N2")</td></tr>
+                    <tr class="fw-bold"><td>Total payable</td><td class="text-end">₦@Model.Total.ToString("N2")</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

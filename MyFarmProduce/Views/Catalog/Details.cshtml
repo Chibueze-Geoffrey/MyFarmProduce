@@ -1,0 +1,50 @@
+@model Product
+@{
+    ViewData["Title"] = Model.Name;
+    var soldOut = !Model.IsAvailable || Model.StockQty <= 0;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Shop</a></li>
+        <li class="breadcrumb-item active">@Model.Name</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-5">
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" />
+        }
+        else
+        {
+            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height:280px">
+                <span class="display-1">🧺</span>
+            </div>
+        }
+    </div>
+    <div class="col-md-7">
+        <h1 class="h3">@Model.Name</h1>
+        <p class="text-muted">@Model.Category?.Name</p>
+        <p class="fs-4 fw-bold">₦@Model.Price.ToString("N2") <small class="text-muted fs-6 fw-normal">/ @Model.Unit</small></p>
+
+        @if (soldOut)
+        {
+            <span class="badge bg-secondary mb-3">Out of stock</span>
+        }
+        else
+        {
+            <span class="badge bg-success mb-3">In stock (@Model.StockQty available)</span>
+        }
+
+        <p>@Model.Description</p>
+
+        <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-2" style="max-width:260px">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="productId" value="@Model.Id" />
+            <input type="number" name="quantity" value="1" min="1" max="@Model.StockQty" class="form-control" @(soldOut ? "disabled" : "") />
+            <button type="submit" class="btn btn-success" @(soldOut ? "disabled" : "")>Add to cart</button>
+        </form>
+    </div>
+</div>
