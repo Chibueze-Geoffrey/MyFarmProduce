@@ -88,6 +88,16 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
+            @{
+                var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+                var act = ViewContext.RouteData.Values["action"]?.ToString();
+                var isLanding = (ctrl == "Catalog" && act == "Index") || (ctrl == "Admin" && act == "Products");
+            }
+            @if (!isLanding)
+            {
+                <button type="button" onclick="if (history.length > 1) { history.back(); } else { location.href='/'; }"
+                        class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</button>
+            }
             @if (TempData["Message"] is string flash)
             {
                 <div class="alert alert-info alert-dismissible fade show" role="alert">
