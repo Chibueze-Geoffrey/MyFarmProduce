@@ -36,17 +36,10 @@ builder.Services.AddScoped<CartFactory>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
+        // Single login for everyone; the login action resolves admin vs customer by role.
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/Login";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
-        // Send admin-area visitors to the admin login instead of the customer login.
-        options.Events.OnRedirectToLogin = context =>
-        {
-            var isAdminArea = context.Request.Path.StartsWithSegments("/Admin");
-            var target = isAdminArea ? "/Admin/Login" : options.LoginPath.Value ?? "/Account/Login";
-            context.Response.Redirect($"{target}?returnUrl={Uri.EscapeDataString(context.Request.Path + context.Request.QueryString)}");
-            return Task.CompletedTask;
-        };
     });
 builder.Services.AddAuthorization();
 

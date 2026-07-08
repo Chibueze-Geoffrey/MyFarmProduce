@@ -43,45 +43,18 @@ public class AdminController : Controller
     }
 
     // ---------- Admin authentication ----------
+    // There is a single login form for everyone (/Account/Login) that resolves the
+    // account type by role. Any old /Admin/Login link just forwards there.
 
     [AllowAnonymous, HttpGet]
-    public IActionResult Login(string? returnUrl)
-    {
-        ViewData["ReturnUrl"] = returnUrl;
-        return View();
-    }
-
-    [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(string email, string password, string? returnUrl)
-    {
-        var admin = await _adminAuth.ValidateCredentialsAsync(email ?? "", password ?? "");
-        if (admin is null)
-        {
-            ModelState.AddModelError(string.Empty, "Invalid email or password.");
-            ViewData["ReturnUrl"] = returnUrl;
-            return View();
-        }
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, admin.Id.ToString()),
-            new(ClaimTypes.Name, admin.Name),
-            new(ClaimTypes.Email, admin.Email),
-            new(ClaimTypes.Role, AppConstants.Roles.Admin)
-        };
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return Redirect(returnUrl);
-        return RedirectToAction(nameof(Products));
-    }
+    public IActionResult Login(string? returnUrl) =>
+        RedirectToAction("Login", "Account", new { returnUrl });
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return RedirectToAction(nameof(Login));
+        return RedirectToAction("Login", "Account");
     }
 
     // ---------- Inventory ----------
