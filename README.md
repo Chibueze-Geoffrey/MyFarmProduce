@@ -58,7 +58,7 @@ The connection string is in `MyFarmProduce/appsettings.json` (`ConnectionStrings
 
 ## Deploying to Render
 - Render has no native .NET runtime, so the app ships as a Docker web service (see `Dockerfile` at repo root).
-- Use Render's managed PostgreSQL for the database; set the `ConnectionStrings__DefaultConnection` env var on the web service to the Npgsql-format connection string for that database (see `render.yaml` for a ready-to-use Blueprint).
+- Use Render's managed PostgreSQL for the database; set the `ConnectionStrings__DefaultConnection` env var on the web service to the connection string for that database (see `render.yaml` for a ready-to-use Blueprint — it deploys only the web service and expects you to set that env var by hand, since Render's free tier allows just one free database per account).
 - Uploaded images (`wwwroot/uploads`) are written to local disk, which is **ephemeral** on Render — they're wiped on every deploy/restart unless you attach a paid persistent disk mounted at that path. Fine for demoing the MVP; revisit before real usage.
 - SignalR chat works as-is on a single instance; add a backplane (e.g. Redis) only if you later scale to multiple instances.
 

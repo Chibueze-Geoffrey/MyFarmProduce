@@ -1,8 +1,3 @@
-databases:
-  - name: myfarmproduce-db
-    databaseName: myfarmproduce
-    plan: free
-
 services:
   - type: web
     name: myfarmproduce
@@ -11,8 +6,9 @@ services:
     dockerContext: .
     plan: free
     envVars:
-      # Npgsql (6.0+) accepts Render's URI-style connection string directly.
+      # No database is declared here — Render's free tier allows only one
+      # active free Postgres instance per account. Point this at your
+      # existing database's connection string (Npgsql 6.0+ accepts Render's
+      # URI-style connection string directly) via the dashboard.
       - key: ConnectionStrings__DefaultConnection
-        fromDatabase:
-          name: myfarmproduce-db
-          property: connectionString
+        sync: false
