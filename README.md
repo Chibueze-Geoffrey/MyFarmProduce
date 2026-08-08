@@ -1,6 +1,6 @@
 # MyFarmProduce
 
-A farm-produce ordering and delivery web app built with **ASP.NET Core MVC (.NET 10)** and **EF Core / SQL Server**, using a layered architecture. Customers browse produce, order and pay online, and track delivery; admins manage the catalog, orders, and users. It also includes a real-time community chat, an AI-style support assistant, and dark mode.
+A farm-produce ordering and delivery web app built with **ASP.NET Core MVC (.NET 10)** and **EF Core / PostgreSQL**, using a layered architecture. Customers browse produce, order and pay online, and track delivery; admins manage the catalog, orders, and users. It also includes a real-time community chat, an AI-style support assistant, and dark mode.
 
 ## Features
 
@@ -36,7 +36,7 @@ A farm-produce ordering and delivery web app built with **ASP.NET Core MVC (.NET
 
 ## Tech stack
 - ASP.NET Core MVC, Razor views, Bootstrap 5.3 (dark mode via `data-bs-theme`)
-- EF Core 10 (Code First) + SQL Server (LocalDB in dev)
+- EF Core 10 (Code First) + PostgreSQL (via Npgsql)
 - SignalR for real-time chat
 - Cookie authentication (PBKDF2 password hashing — no full Identity stack)
 
@@ -44,7 +44,7 @@ A farm-produce ordering and delivery web app built with **ASP.NET Core MVC (.NET
 
 ### Prerequisites
 - .NET 10 SDK
-- SQL Server / LocalDB (`(localdb)\mssqllocaldb`)
+- PostgreSQL (local install, or via Docker: `docker run --name myfarmproduce-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres`)
 
 ### Run
 ```bash
@@ -54,7 +54,13 @@ dotnet run --project MyFarmProduce
 ```
 The app applies EF migrations and seeds data (categories, sample products, admin accounts) on startup. Browse to `http://localhost:5085`.
 
-The connection string is in `MyFarmProduce/appsettings.json` (`ConnectionStrings:DefaultConnection`).
+The connection string is in `MyFarmProduce/appsettings.json` (`ConnectionStrings:DefaultConnection`), defaulting to `Host=localhost;Database=myfarmproduce;Username=postgres;Password=postgres`.
+
+## Deploying to Render
+- Render has no native .NET runtime, so the app ships as a Docker web service (see `Dockerfile` at repo root).
+- Use Render's managed PostgreSQL for the database; set the `ConnectionStrings__DefaultConnection` env var on the web service to the Npgsql-format connection string for that database (see `render.yaml` for a ready-to-use Blueprint).
+- Uploaded images (`wwwroot/uploads`) are written to local disk, which is **ephemeral** on Render — they're wiped on every deploy/restart unless you attach a paid persistent disk mounted at that path. Fine for demoing the MVP; revisit before real usage.
+- SignalR chat works as-is on a single instance; add a backplane (e.g. Redis) only if you later scale to multiple instances.
 
 ### Default accounts
 - **Admin:** `admin@myfarmproduce.local` / `Admin@123`

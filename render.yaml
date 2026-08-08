@@ -1,0 +1,18 @@
+databases:
+  - name: myfarmproduce-db
+    databaseName: myfarmproduce
+    plan: free
+
+services:
+  - type: web
+    name: myfarmproduce
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      # Npgsql (6.0+) accepts Render's URI-style connection string directly.
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: myfarmproduce-db
+          property: connectionString
