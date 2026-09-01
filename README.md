@@ -1,6 +1,6 @@
 # MyFarmProduce
 
-A farm-produce ordering and delivery web app built with **ASP.NET Core MVC (.NET 10)** and **EF Core / PostgreSQL**, using a layered architecture. Customers browse produce, order and pay online, and track delivery; admins manage the catalog, orders, and users. It also includes a real-time community chat, an AI-style support assistant, and dark mode.
+A farm-produce ordering and delivery web app built with **Spring Boot (Java 21)** and **Spring Data JPA / PostgreSQL**, using a layered Maven multi-module architecture. Customers browse produce, order and pay online, and track delivery; admins manage the catalog, orders, and users. It also includes a real-time community chat, an AI-style support assistant, and dark mode.
 
 ## Features
 
@@ -11,7 +11,7 @@ A farm-produce ordering and delivery web app built with **ASP.NET Core MVC (.NET
 - Online payment (simulated gateway) with callback **and** webhook confirmation; stock decrements on confirmed payment
 - Order confirmation, tracking, history, and one-click reorder (adjusts for current stock/price)
 - Profile with photo upload; phone/email are locked and changed via an admin-approved request
-- Real-time **community chat** (SignalR)
+- Real-time **community chat** (WebSocket/STOMP)
 - **AI help assistant** (free, keyless rule-based; answers order/delivery/payment/availability questions from live data)
 - **Dark mode** toggle (persisted)
 - Forced password change on first login for admin-created accounts
@@ -23,61 +23,64 @@ A farm-produce ordering and delivery web app built with **ASP.NET Core MVC (.NET
 - View support tickets
 - Admin profile with photo
 
-## Architecture (layered)
+## Architecture (layered, Maven multi-module)
 
-| Project | Responsibility |
+| Module | Responsibility |
 |---|---|
-| `MyFarmProduce` | ASP.NET Core MVC web app (controllers, Razor views, SignalR hub, file storage) |
-| `MyFarmProduce.Application` | Service interfaces + DTOs |
-| `MyFarmProduce.Domain` | Entities (encapsulated `Product` stock via `ReduceStock`/`Restock`) |
-| `MyFarmProduce.Infrastructure` | EF Core `DbContext`, service implementations, migrations, seeding |
-| `MyFarmProduce.Common` | Enums, constants |
-| `MyFarmProduce.Tests` | xUnit tests |
+| `web` | Spring MVC web app (controllers, Thymeleaf views, WebSocket/STOMP chat, security, file storage) |
+| `application` | Service interfaces + DTOs (`com.myfarmproduce.application`) |
+| `domain` | JPA entities (encapsulated `Product` stock via `reduceStock`/`restock`), enums |
+| `infrastructure` | Spring Data repositories, service implementations, Flyway migrations, seeding |
+| `common` | Shared constants |
+
+Each module is its own Maven artifact with its own `pom.xml`; dependencies point one way (`web` → `infrastructure`/`application` → `domain` → `common`), mirroring the original layered project-reference graph.
 
 ## Tech stack
-- ASP.NET Core MVC, Razor views, Bootstrap 5.3 (dark mode via `data-bs-theme`)
-- EF Core 10 (Code First) + PostgreSQL (via Npgsql)
-- SignalR for real-time chat
-- Cookie authentication (PBKDF2 password hashing — no full Identity stack)
+- Spring Boot 3 (Java 21), Maven multi-module build
+- Spring MVC + Thymeleaf, Bootstrap 5.3 (dark mode via `data-bs-theme`)
+- Spring Data JPA (Hibernate) + PostgreSQL, Flyway migrations
+- Spring Security (custom `AuthenticationProvider` resolving Admin vs Customer by role) + WebSocket/STOMP for chat
+- Cookie/session authentication (PBKDF2 password hashing — no OAuth/full Identity provider)
 
 ## Getting started
 
 ### Prerequisites
-- .NET 10 SDK
+- JDK 21
+- Maven 3.9+
 - PostgreSQL (local install, or via Docker: `docker run --name myfarmproduce-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres`)
 
 ### Run
 ```bash
 git clone <your-repo-url>
 cd MyFarmProduce
-dotnet run --project MyFarmProduce
+mvn -pl web -am spring-boot:run
 ```
-The app applies EF migrations and seeds data (categories, sample products, admin accounts) on startup. Browse to `http://localhost:5085`.
+Flyway applies the schema migration and a `CommandLineRunner` seeds data (categories, sample products, admin accounts) on startup. Browse to `http://localhost:8080`.
 
-The connection string is in `MyFarmProduce/appsettings.json` (`ConnectionStrings:DefaultConnection`), defaulting to `Host=localhost;Database=myfarmproduce;Username=postgres;Password=postgres`.
+The datasource is configured in `web/src/main/resources/application.properties` via `spring.datasource.*`, defaulting to `jdbc:postgresql://localhost:5432/myfarmproduce` / `postgres` / `postgres` (override with the `SPRING_DATASOURCE_URL`/`_USERNAME`/`_PASSWORD` env vars).
 
 ## Deploying to Render
-- Render has no native .NET runtime, so the app ships as a Docker web service (see `Dockerfile` at repo root).
-- Use Render's managed PostgreSQL for the database; set the `ConnectionStrings__DefaultConnection` env var on the web service to the connection string for that database (see `render.yaml` for a ready-to-use Blueprint — it deploys only the web service and expects you to set that env var by hand, since Render's free tier allows just one free database per account).
-- Uploaded images (`wwwroot/uploads`) are written to local disk, which is **ephemeral** on Render — they're wiped on every deploy/restart unless you attach a paid persistent disk mounted at that path. Fine for demoing the MVP; revisit before real usage.
-- SignalR chat works as-is on a single instance; add a backplane (e.g. Redis) only if you later scale to multiple instances.
+- Render has no native Java buildpack tuned for multi-module Maven, so the app ships as a Docker web service (see `Dockerfile` at repo root, which builds the whole reactor and runs the `web` module's jar).
+- Use Render's managed PostgreSQL for the database; set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD` on the web service (see `render.yaml` for a ready-to-use Blueprint — it deploys only the web service and expects you to set those by hand, since Render's free tier allows just one free database per account, and Spring's JDBC driver needs a `jdbc:postgresql://...` URL rather than Render's single `postgres://` URI).
+- Uploaded images (`uploads/`) are written to local disk, which is **ephemeral** on Render — they're wiped on every deploy/restart unless you attach a paid persistent disk mounted at that path. Fine for demoing the MVP; revisit before real usage.
+- Chat works as-is on a single instance (in-memory STOMP broker); add an external broker relay (e.g. RabbitMQ) only if you later scale to multiple instances.
 
 ### Default accounts
 - **Admin:** `admin@myfarmproduce.local` / `Admin@123`
 - **Admin:** `chibuezegeoffrey@gmail.com` / `Admin@123`
 - Customers self-register, or an admin creates them with the default password `Password@1234` (changed on first login).
 
-Log in via the single `/Account/Login` form — admins are resolved by role automatically.
+Log in via the single `/account/login` form — admins are resolved by role automatically.
 
 ## Notable design decisions
-- **Admins are a separate table** from customers and are created only in the backend (seed/SQL); there is no admin sign-up UI.
-- **Payment** is behind an `IPaymentGateway` abstraction with a dev/simulated implementation; swap in Paystack/Flutterwave later.
-- **Email/SMS** use logging stubs (`IEmailSender`/`ISmsSender`) — no real provider is wired up yet.
-- **AI support** uses a free, keyless `ISupportAssistant` (rule-based over live data); swap in Claude or another LLM later by changing one DI registration.
+- **Admins are a separate table** from customers and are created only in the backend (seed data); there is no admin sign-up UI.
+- **Payment** is behind a `PaymentGateway` abstraction with a dev/simulated implementation; swap in Paystack/Flutterwave later.
+- **Email/SMS** use logging stubs (`EmailSender`/`SmsSender`) — no real provider is wired up yet.
+- **AI support** uses a free, keyless `SupportAssistant` (rule-based over live data); swap in Claude or another LLM later by changing one Spring bean.
 
 ## Tests
 ```bash
-dotnet test
+mvn test
 ```
 
 ## Project status

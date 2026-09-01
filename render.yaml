@@ -6,9 +6,15 @@ services:
     dockerContext: .
     plan: free
     envVars:
-      # No database is declared here — Render's free tier allows only one
-      # active free Postgres instance per account. Point this at your
-      # existing database's connection string (Npgsql 6.0+ accepts Render's
-      # URI-style connection string directly) via the dashboard.
-      - key: ConnectionStrings__DefaultConnection
+      # No database is declared here - Render's free tier allows only one
+      # active free Postgres instance per account. Point these at your
+      # existing database's credentials via the dashboard. Spring's JDBC
+      # driver needs a jdbc:postgresql://... URL plus separate
+      # username/password - it doesn't accept Render's single postgres://
+      # connection-string URI directly (unlike the previous Npgsql setup).
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
         sync: false

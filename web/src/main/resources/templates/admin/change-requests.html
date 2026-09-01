@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Profile change requests</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-3">Profile Change Requests</h1>
+
+    <table class="table align-middle">
+        <thead><tr><th>Customer</th><th>Field</th><th>Current</th><th>Requested</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="r : ${requests}">
+            <td th:text="${r.customer.name}"></td>
+            <td th:text="${r.field}"></td>
+            <td th:text="${r.currentValue}"></td>
+            <td th:text="${r.requestedValue}"></td>
+            <td><span class="badge bg-secondary" th:text="${r.status}"></span></td>
+            <td class="d-flex gap-1" th:if="${r.status.name() == 'Pending'}">
+                <form th:action="@{/admin/change-requests/{id}/approve(id=${r.id})}" method="post">
+                    <button type="submit" class="btn btn-sm btn-outline-success">Approve</button>
+                </form>
+                <form th:action="@{/admin/change-requests/{id}/reject(id=${r.id})}" method="post">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

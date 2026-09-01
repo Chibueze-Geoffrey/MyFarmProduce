@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Payment</title></head>
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h1 class="h4 mb-3">💳 Simulated Payment Gateway</h1>
+                    <p class="text-muted">This is a stand-in for Paystack/Flutterwave (dev mode). Reference:</p>
+                    <code class="d-block mb-4" th:text="${reference}"></code>
+
+                    <form th:action="@{/payment/callback}" method="post" class="d-grid gap-2">
+                        <input type="hidden" name="reference" th:value="${reference}"/>
+                        <button type="submit" name="success" value="true" class="btn btn-success btn-lg">Pay now (success)</button>
+                        <button type="submit" name="success" value="false" class="btn btn-outline-danger">Cancel / fail payment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

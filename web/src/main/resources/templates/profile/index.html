@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>My profile</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-3">My Profile</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <img th:if="${customer.photoUrl}" th:src="${customer.photoUrl}" class="rounded-circle mb-3" style="width:96px;height:96px;object-fit:cover"/>
+            <form th:action="@{/profile}" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label">Display name</label>
+                    <input type="text" name="name" th:value="${customer.name}" class="form-control" required/>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Photo</label>
+                    <input type="file" name="photoFile" class="form-control" accept="image/*"/>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+            </form>
+
+            <hr/>
+            <p><strong>Email:</strong> <span th:text="${customer.email}"></span> <span class="text-muted small">(locked)</span></p>
+            <p><strong>Phone:</strong> <span th:text="${customer.phone}"></span> <span class="text-muted small">(locked)</span></p>
+
+            <form th:action="@{/profile/request-change}" method="post" class="d-flex gap-2 align-items-end">
+                <div>
+                    <label class="form-label small">Field</label>
+                    <select name="field" class="form-select form-select-sm">
+                        <option value="Phone">Phone</option>
+                        <option value="Email">Email</option>
+                    </select>
+                </div>
+                <div class="flex-grow-1">
+                    <label class="form-label small">New value</label>
+                    <input type="text" name="requestedValue" class="form-control form-control-sm" required/>
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Request change</button>
+            </form>
+        </div>
+
+        <div class="col-md-6">
+            <h2 class="h5">Change requests</h2>
+            <p class="text-muted" th:if="${#lists.isEmpty(changeRequests)}">No requests yet.</p>
+            <table class="table table-sm" th:unless="${#lists.isEmpty(changeRequests)}">
+                <thead><tr><th>Field</th><th>Requested</th><th>Status</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${changeRequests}">
+                    <td th:text="${r.field}"></td>
+                    <td th:text="${r.requestedValue}"></td>
+                    <td><span class="badge bg-secondary" th:text="${r.status}"></span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+</body>
+</html>

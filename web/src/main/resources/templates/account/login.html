@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Log in</title></head>
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <h1 class="h3 mb-3">Log in</h1>
+            <div th:if="${error}" class="alert alert-danger">Invalid email or password.</div>
+            <form th:action="@{/account/login}" method="post">
+                <input type="hidden" name="returnUrl" th:value="${returnUrl}"/>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" required/>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required/>
+                </div>
+                <button type="submit" class="btn btn-success">Log in</button>
+                <a th:href="@{/account/register}" class="btn btn-link">Create an account</a>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

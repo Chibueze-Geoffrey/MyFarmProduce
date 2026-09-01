@@ -1,10 +1,10 @@
-**/bin/
-**/obj/
-**/.vs/
+**/target/
+**/.idea/
+**/*.iml
 .git/
 .github/
 .gitignore
 .gitattributes
-**/*.user
+.vs/
 README.md
-MyFarmProduce.Tests/
+uploads/

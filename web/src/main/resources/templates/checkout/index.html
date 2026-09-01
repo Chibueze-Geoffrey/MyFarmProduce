@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Checkout</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-3">Checkout</h1>
+
+    <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+        <p th:each="err : ${#fields.globalErrors()}" th:text="${err}" class="mb-0"></p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <form th:action="@{/checkout}" th:object="${form}" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Delivery address</label>
+                    <textarea th:field="*{deliveryAddress}" class="form-control" rows="3"></textarea>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('deliveryAddress')}" th:errors="*{deliveryAddress}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone number</label>
+                    <input type="text" th:field="*{phone}" class="form-control"/>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Delivery note (optional)</label>
+                    <textarea th:field="*{deliveryNote}" class="form-control" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Place order &amp; pay</button>
+            </form>
+        </div>
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-body">
+                    <p class="d-flex justify-content-between">
+                        <span>Subtotal</span>
+                        <span>₦<span th:text="${#numbers.formatDecimal(form.subtotal, 1, 'COMMA', 2, 'POINT')}"></span></span>
+                    </p>
+                    <p class="d-flex justify-content-between">
+                        <span>Delivery fee</span>
+                        <span>₦<span th:text="${#numbers.formatDecimal(form.deliveryFee, 1, 'COMMA', 2, 'POINT')}"></span></span>
+                    </p>
+                    <p class="d-flex justify-content-between fw-bold">
+                        <span>Total</span>
+                        <span>₦<span th:text="${#numbers.formatDecimal(form.total, 1, 'COMMA', 2, 'POINT')}"></span></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Orders</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-3">Orders</h1>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-auto">
+            <select name="status" class="form-select form-select-sm">
+                <option value="">All statuses</option>
+                <option th:each="s : ${T(com.myfarmproduce.domain.enums.OrderStatus).values()}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == status}"></option>
+            </select>
+        </div>
+        <div class="col-auto"><input type="date" name="from" th:value="${from}" class="form-control form-control-sm"/></div>
+        <div class="col-auto"><input type="date" name="to" th:value="${to}" class="form-control form-control-sm"/></div>
+        <div class="col-auto"><button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button></div>
+    </form>
+
+    <table class="table align-middle">
+        <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Status</th><th>Total</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="o : ${orders}">
+            <td>#<span th:text="${o.id}"></span></td>
+            <td th:text="${o.customer.name}"></td>
+            <td th:text="${#temporals.format(o.createdAt, 'd MMM yyyy')}"></td>
+            <td><span class="badge bg-secondary" th:text="${o.status}"></span></td>
+            <td>₦<span th:text="${#numbers.formatDecimal(o.total, 1, 'COMMA', 2, 'POINT')}"></span></td>
+            <td><a th:href="@{/admin/orders/{id}(id=${o.id})}" class="btn btn-sm btn-outline-secondary">Details</a></td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

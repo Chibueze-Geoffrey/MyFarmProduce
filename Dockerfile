@@ -1,30 +1,33 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
 
-COPY NuGet.config .
-COPY MyFarmProduce/MyFarmProduce.csproj MyFarmProduce/
-COPY MyFarmProduce.Application/MyFarmProduce.Application.csproj MyFarmProduce.Application/
-COPY MyFarmProduce.Common/MyFarmProduce.Common.csproj MyFarmProduce.Common/
-COPY MyFarmProduce.Domain/MyFarmProduce.Domain.csproj MyFarmProduce.Domain/
-COPY MyFarmProduce.Infrastructure/MyFarmProduce.Infrastructure.csproj MyFarmProduce.Infrastructure/
-RUN dotnet restore MyFarmProduce/MyFarmProduce.csproj
+# Copy POMs first so dependency resolution is cached across source-only changes.
+COPY pom.xml .
+COPY common/pom.xml common/
+COPY domain/pom.xml domain/
+COPY application/pom.xml application/
+COPY infrastructure/pom.xml infrastructure/
+COPY web/pom.xml web/
+RUN mvn -B -q -pl web -am dependency:go-offline
 
-COPY MyFarmProduce/ MyFarmProduce/
-COPY MyFarmProduce.Application/ MyFarmProduce.Application/
-COPY MyFarmProduce.Common/ MyFarmProduce.Common/
-COPY MyFarmProduce.Domain/ MyFarmProduce.Domain/
-COPY MyFarmProduce.Infrastructure/ MyFarmProduce.Infrastructure/
+COPY common/src common/src
+COPY domain/src domain/src
+COPY application/src application/src
+COPY infrastructure/src infrastructure/src
+COPY web/src web/src
 
-RUN dotnet publish MyFarmProduce/MyFarmProduce.csproj -c Release -o /app/publish --no-restore
+RUN mvn -B -pl web -am package -DskipTests
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM eclipse-temurin:21-jre AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=build /src/web/target/app.jar app.jar
 
-ENV ASPNETCORE_ENVIRONMENT=Production
+ENV SPRING_PROFILES_ACTIVE=production
 EXPOSE 8080
 
-# Render injects PORT at container start; default to 8080 for local `docker run`.
-ENTRYPOINT ["/bin/sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-8080} exec dotnet MyFarmProduce.dll"]
+# Render (and most PaaS hosts) inject PORT at container start; Spring reads it via
+# server.port=${PORT:8080} in application.properties, so a plain `java -jar` works
+# without any shell-form entrypoint trickery.
+ENTRYPOINT ["java", "-jar", "app.jar"]

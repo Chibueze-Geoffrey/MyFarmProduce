@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Order confirmed</title></head>
+<body>
+<section>
+    <div class="text-center mb-4">
+        <h1 class="h3">✅ Order #<span th:text="${order.id}"></span> confirmed</h1>
+        <p class="text-muted">Status: <span th:text="${order.status}"></span></p>
+    </div>
+
+    <table class="table">
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit price</th><th>Line total</th></tr></thead>
+        <tbody>
+        <tr th:each="item : ${order.items}">
+            <td th:text="${item.product.name}"></td>
+            <td th:text="${item.quantity}"></td>
+            <td>₦<span th:text="${#numbers.formatDecimal(item.unitPriceAtOrder, 1, 'COMMA', 2, 'POINT')}"></span></td>
+            <td>₦<span th:text="${#numbers.formatDecimal(item.unitPriceAtOrder.multiply(T(java.math.BigDecimal).valueOf(item.quantity)), 1, 'COMMA', 2, 'POINT')}"></span></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="row justify-content-end">
+        <div class="col-md-4">
+            <p class="d-flex justify-content-between"><span>Subtotal</span><span>₦<span th:text="${#numbers.formatDecimal(order.subtotal, 1, 'COMMA', 2, 'POINT')}"></span></span></p>
+            <p class="d-flex justify-content-between"><span>Delivery fee</span><span>₦<span th:text="${#numbers.formatDecimal(order.deliveryFee, 1, 'COMMA', 2, 'POINT')}"></span></span></p>
+            <p class="d-flex justify-content-between fw-bold"><span>Total</span><span>₦<span th:text="${#numbers.formatDecimal(order.total, 1, 'COMMA', 2, 'POINT')}"></span></span></p>
+        </div>
+    </div>
+
+    <div class="text-center mt-3">
+        <a th:href="@{/orders}" class="btn btn-outline-success">View my orders</a>
+    </div>
+</section>
+</body>
+</html>

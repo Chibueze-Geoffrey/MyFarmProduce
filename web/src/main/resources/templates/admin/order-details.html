@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Order details</title></head>
+<body>
+<section>
+    <h1 class="h3 mb-3">Order #<span th:text="${order.id}"></span></h1>
+    <p>Customer: <span th:text="${order.customer.name}"></span> (<span th:text="${order.customer.email}"></span>)</p>
+    <p>Status: <span class="badge bg-secondary" th:text="${order.status}"></span></p>
+    <p>Delivery address: <span th:text="${order.deliveryAddress}"></span></p>
+    <p>Phone: <span th:text="${order.phone}"></span></p>
+    <p th:if="${order.deliveryNote}">Note: <span th:text="${order.deliveryNote}"></span></p>
+    <p th:if="${order.payment}">Payment: <span th:text="${order.payment.status}"></span> via <span th:text="${order.payment.provider}"></span></p>
+
+    <table class="table">
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit price</th></tr></thead>
+        <tbody>
+        <tr th:each="item : ${order.items}">
+            <td th:text="${item.product.name}"></td>
+            <td th:text="${item.quantity}"></td>
+            <td>₦<span th:text="${#numbers.formatDecimal(item.unitPriceAtOrder, 1, 'COMMA', 2, 'POINT')}"></span></td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="fw-bold">Total: ₦<span th:text="${#numbers.formatDecimal(order.total, 1, 'COMMA', 2, 'POINT')}"></span></p>
+
+    <div class="d-flex gap-2 flex-wrap">
+        <form th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post" class="d-flex gap-1">
+            <select name="status" class="form-select form-select-sm">
+                <option th:each="s : ${T(com.myfarmproduce.domain.enums.OrderStatus).values()}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == order.status}"></option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Update status</button>
+        </form>
+        <form th:action="@{/admin/orders/{id}/cancel(id=${order.id})}" method="post">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel order</button>
+        </form>
+        <form th:action="@{/admin/orders/{id}/refund(id=${order.id})}" method="post" class="d-flex gap-1">
+            <input type="text" name="note" class="form-control form-control-sm" placeholder="Refund note"/>
+            <button type="submit" class="btn btn-sm btn-outline-warning">Refund</button>
+        </form>
+    </div>
+</section>
+</body>
+</html>

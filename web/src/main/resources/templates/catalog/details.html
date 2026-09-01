@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title th:text="${product.name}">Product</title></head>
+<body>
+<section>
+    <div class="row">
+        <div class="col-md-5">
+            <img th:if="${product.imageUrl}" th:src="${product.imageUrl}" class="img-fluid rounded" th:alt="${product.name}"/>
+            <div th:unless="${product.imageUrl}" class="bg-light d-flex align-items-center justify-content-center rounded" style="height:300px">
+                <span class="display-1">🧺</span>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <h1 class="h3" th:text="${product.name}"></h1>
+            <p class="text-muted" th:text="${product.category.name}"></p>
+            <p class="fs-4 fw-bold">
+                ₦<span th:text="${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}"></span>
+                <small class="text-muted fw-normal">/ <span th:text="${product.unit}"></span></small>
+            </p>
+            <p th:text="${product.description}"></p>
+            <p>
+                <span th:if="${!product.available || product.stockQty <= 0}" class="badge bg-secondary">Out of stock</span>
+                <span th:unless="${!product.available || product.stockQty <= 0}" class="badge bg-success"
+                      th:text="'In stock (' + ${product.stockQty} + ')'"></span>
+            </p>
+            <form th:action="@{/cart/add}" method="post" class="d-flex gap-2" sec:authorize="!hasRole('ADMIN')">
+                <input type="hidden" name="productId" th:value="${product.id}"/>
+                <input type="hidden" name="returnUrl" th:value="@{/catalog/{id}(id=${product.id})}"/>
+                <input type="number" name="quantity" value="1" min="1" th:max="${product.stockQty}"
+                       class="form-control" style="width:100px"
+                       th:disabled="${!product.available || product.stockQty <= 0}"/>
+                <button type="submit" class="btn btn-success"
+                        th:disabled="${!product.available || product.stockQty <= 0}">Add to cart</button>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

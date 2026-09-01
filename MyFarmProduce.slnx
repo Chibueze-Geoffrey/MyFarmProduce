@@ -1,8 +1,0 @@
-<Solution>
-  <Project Path="MyFarmProduce.Application/MyFarmProduce.Application.csproj" />
-  <Project Path="MyFarmProduce.Common/MyFarmProduce.Common.csproj" />
-  <Project Path="MyFarmProduce.Domain/MyFarmProduce.Domain.csproj" />
-  <Project Path="MyFarmProduce.Infrastructure/MyFarmProduce.Infrastructure.csproj" />
-  <Project Path="MyFarmProduce.Tests/MyFarmProduce.Tests.csproj" />
-  <Project Path="MyFarmProduce/MyFarmProduce.csproj" />
-</Solution>
