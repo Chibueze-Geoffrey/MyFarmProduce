@@ -24,15 +24,24 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
 
     private static final String LEGACY_VAR = "ConnectionStrings__DefaultConnection";
 
+    private static final String TAG = "[DatabaseUrlEnvironmentPostProcessor]";
+
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
         String raw = environment.getProperty(LEGACY_VAR);
-        if (raw == null || raw.isBlank()) return;
+        if (raw == null || raw.isBlank()) {
+            System.out.println(TAG + " " + LEGACY_VAR + " is not set (or blank) - using spring.datasource.* defaults/env vars instead.");
+            return;
+        }
 
         try {
             URI uri = URI.create(raw);
             String scheme = uri.getScheme();
-            if (scheme == null || !(scheme.equals("postgres") || scheme.equals("postgresql"))) return;
+            if (scheme == null || !(scheme.equals("postgres") || scheme.equals("postgresql"))) {
+                System.out.println(TAG + " " + LEGACY_VAR + " is set but doesn't look like a postgres://... URI "
+                        + "(scheme=" + scheme + ") - ignoring it. Value must start with postgres:// or postgresql://.");
+                return;
+            }
 
             String username = null;
             String password = null;
@@ -56,8 +65,11 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
             if (password != null) props.put("spring.datasource.password", password);
 
             environment.getPropertySources().addFirst(new MapPropertySource("databaseUrlOverride", props));
-        } catch (IllegalArgumentException ignored) {
-            // Not a parseable URI - leave spring.datasource.* to be resolved some other way.
+            System.out.println(TAG + " Applied datasource from " + LEGACY_VAR + " -> " + jdbcUrl
+                    + " (username " + (username != null ? "set" : "NOT set") + ")");
+        } catch (IllegalArgumentException e) {
+            System.out.println(TAG + " " + LEGACY_VAR + " could not be parsed as a URI (" + e.getMessage()
+                    + ") - ignoring it and using spring.datasource.* defaults/env vars instead.");
         }
     }
 }
