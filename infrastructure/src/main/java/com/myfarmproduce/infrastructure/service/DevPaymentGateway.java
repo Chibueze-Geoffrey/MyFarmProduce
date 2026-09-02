@@ -5,9 +5,9 @@ import com.myfarmproduce.application.model.PaymentVerificationResult;
 import com.myfarmproduce.application.service.PaymentGateway;
 import com.myfarmproduce.domain.entity.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriUtils;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -25,7 +25,7 @@ public class DevPaymentGateway implements PaymentGateway {
     public PaymentInitResult initialize(Order order, String callbackUrl) {
         String raw = "DEV-" + order.getId() + "-" + UUID.randomUUID().toString().replace("-", "");
         String reference = raw.substring(0, Math.min(24, raw.length()));
-        String redirectUrl = callbackUrl + "?reference=" + UriUtils.encode(reference, StandardCharsets.UTF_8);
+        String redirectUrl = callbackUrl + "?reference=" + URLEncoder.encode(reference, StandardCharsets.UTF_8);
         return new PaymentInitResult(reference, redirectUrl);
     }
 
