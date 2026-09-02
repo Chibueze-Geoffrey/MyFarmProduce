@@ -6,15 +6,9 @@ services:
     dockerContext: .
     plan: free
     envVars:
-      # No database is declared here - Render's free tier allows only one
-      # active free Postgres instance per account. Point these at your
-      # existing database's credentials via the dashboard. Spring's JDBC
-      # driver needs a jdbc:postgresql://... URL plus separate
-      # username/password - it doesn't accept Render's single postgres://
-      # connection-string URI directly (unlike the previous Npgsql setup).
-      - key: SPRING_DATASOURCE_URL
-        sync: false
-      - key: SPRING_DATASOURCE_USERNAME
-        sync: false
-      - key: SPRING_DATASOURCE_PASSWORD
+      # Same env var (name + postgres:// URI format) the previous .NET/Npgsql
+      # deployment used. The app parses it into the JDBC connection Spring
+      # needs internally (see DatabaseUrlEnvironmentPostProcessor) - no
+      # dashboard changes needed if it's already set from the old deploy.
+      - key: ConnectionStrings__DefaultConnection
         sync: false

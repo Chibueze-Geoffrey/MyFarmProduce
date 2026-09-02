@@ -57,11 +57,11 @@ mvn -pl web -am spring-boot:run
 ```
 Flyway applies the schema migration and a `CommandLineRunner` seeds data (categories, sample products, admin accounts) on startup. Browse to `http://localhost:8080`.
 
-The datasource is configured in `web/src/main/resources/application.properties` via `spring.datasource.*`, defaulting to `jdbc:postgresql://localhost:5432/myfarmproduce` / `postgres` / `postgres` (override with the `SPRING_DATASOURCE_URL`/`_USERNAME`/`_PASSWORD` env vars).
+The datasource defaults to `jdbc:postgresql://localhost:5432/myfarmproduce` / `postgres` / `postgres` (`spring.datasource.*` in `web/src/main/resources/application.properties`, overridable via `SPRING_DATASOURCE_URL`/`_USERNAME`/`_PASSWORD`). You can also set a single `ConnectionStrings__DefaultConnection` env var to a `postgres://user:pass@host:port/db` URI (the same name/format the app used before the Java rewrite) — it's parsed into the JDBC connection at startup and takes priority over the three separate vars.
 
 ## Deploying to Render
 - Render has no native Java buildpack tuned for multi-module Maven, so the app ships as a Docker web service (see `Dockerfile` at repo root, which builds the whole reactor and runs the `web` module's jar).
-- Use Render's managed PostgreSQL for the database; set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD` on the web service (see `render.yaml` for a ready-to-use Blueprint — it deploys only the web service and expects you to set those by hand, since Render's free tier allows just one free database per account, and Spring's JDBC driver needs a `jdbc:postgresql://...` URL rather than Render's single `postgres://` URI).
+- Use Render's managed PostgreSQL for the database; set `ConnectionStrings__DefaultConnection` on the web service to that database's connection string (see `render.yaml` for a ready-to-use Blueprint — it deploys only the web service and expects you to set that by hand, since Render's free tier allows just one free database per account). If you're carrying over the same env var from a previous deploy of this app, no dashboard changes are needed.
 - Uploaded images (`uploads/`) are written to local disk, which is **ephemeral** on Render — they're wiped on every deploy/restart unless you attach a paid persistent disk mounted at that path. Fine for demoing the MVP; revisit before real usage.
 - Chat works as-is on a single instance (in-memory STOMP broker); add an external broker relay (e.g. RabbitMQ) only if you later scale to multiple instances.
 
