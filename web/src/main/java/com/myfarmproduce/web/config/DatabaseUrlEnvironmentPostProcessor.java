@@ -9,21 +9,22 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Accepts a single Postgres URI connection string under the same env var name
- * the previous .NET/Npgsql deployment used - {@code ConnectionStrings__DefaultConnection},
- * e.g. {@code postgres://user:pass@host:5432/db} - and translates it into the
- * spring.datasource.* properties Spring Data JPA/Flyway expect. This lets an
- * existing Render env var be reused as-is instead of splitting it into three
- * (SPRING_DATASOURCE_URL/_USERNAME/_PASSWORD, which still work as a fallback
- * if this variable isn't set).
+ * Accepts the same env var name the previous .NET/Npgsql deployment used -
+ * {@code ConnectionStrings__DefaultConnection} - in either format Npgsql
+ * accepted: a {@code postgres://user:pass@host:port/db} URI, or the ADO.NET
+ * keyword=value form ({@code Host=...;Port=...;Database=...;Username=...;
+ * Password=...;SSL Mode=...}). Either is translated into the
+ * spring.datasource.* properties Spring Data JPA/Flyway expect, so an
+ * existing Render env var keeps working as-is. SPRING_DATASOURCE_URL/
+ * _USERNAME/_PASSWORD still work too, as a fallback when this var isn't set.
  */
 public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     private static final String LEGACY_VAR = "ConnectionStrings__DefaultConnection";
-
     private static final String TAG = "[DatabaseUrlEnvironmentPostProcessor]";
 
     @Override
@@ -34,13 +35,22 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
             return;
         }
 
+        Map<String, Object> props = raw.contains("://") ? parseUri(raw) : parseAdoNetKeywords(raw);
+        if (props == null || props.isEmpty()) return;
+
+        environment.getPropertySources().addFirst(new MapPropertySource("databaseUrlOverride", props));
+        System.out.println(TAG + " Applied datasource from " + LEGACY_VAR + " -> " + props.get("spring.datasource.url")
+                + " (username " + (props.containsKey("spring.datasource.username") ? "set" : "NOT set") + ")");
+    }
+
+    private Map<String, Object> parseUri(String raw) {
         try {
             URI uri = URI.create(raw);
             String scheme = uri.getScheme();
             if (scheme == null || !(scheme.equals("postgres") || scheme.equals("postgresql"))) {
-                System.out.println(TAG + " " + LEGACY_VAR + " is set but doesn't look like a postgres://... URI "
-                        + "(scheme=" + scheme + ") - ignoring it. Value must start with postgres:// or postgresql://.");
-                return;
+                System.out.println(TAG + " " + LEGACY_VAR + " looks like a URI but has an unexpected scheme ("
+                        + scheme + ") - ignoring it.");
+                return null;
             }
 
             String username = null;
@@ -63,13 +73,43 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
             props.put("spring.datasource.url", jdbcUrl);
             if (username != null) props.put("spring.datasource.username", username);
             if (password != null) props.put("spring.datasource.password", password);
-
-            environment.getPropertySources().addFirst(new MapPropertySource("databaseUrlOverride", props));
-            System.out.println(TAG + " Applied datasource from " + LEGACY_VAR + " -> " + jdbcUrl
-                    + " (username " + (username != null ? "set" : "NOT set") + ")");
+            return props;
         } catch (IllegalArgumentException e) {
-            System.out.println(TAG + " " + LEGACY_VAR + " could not be parsed as a URI (" + e.getMessage()
-                    + ") - ignoring it and using spring.datasource.* defaults/env vars instead.");
+            System.out.println(TAG + " " + LEGACY_VAR + " could not be parsed as a URI (" + e.getMessage() + ") - ignoring it.");
+            return null;
         }
+    }
+
+    private Map<String, Object> parseAdoNetKeywords(String raw) {
+        Map<String, String> kv = new LinkedHashMap<>();
+        for (String segment : raw.split(";")) {
+            if (segment.isBlank()) continue;
+            int eq = segment.indexOf('=');
+            if (eq < 0) continue;
+            String key = segment.substring(0, eq).trim().toLowerCase(Locale.ROOT).replace(" ", "");
+            String value = segment.substring(eq + 1).trim();
+            kv.put(key, value);
+        }
+
+        String host = kv.get("host");
+        String database = kv.get("database");
+        if (host == null || database == null) {
+            System.out.println(TAG + " " + LEGACY_VAR + " doesn't look like a postgres:// URI or an ADO.NET "
+                    + "connection string (missing Host/Database) - ignoring it.");
+            return null;
+        }
+
+        String port = kv.getOrDefault("port", "5432");
+        boolean requireSsl = "require".equalsIgnoreCase(kv.get("sslmode"))
+                || "true".equalsIgnoreCase(kv.get("ssl"));
+
+        String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + database
+                + (requireSsl ? "?sslmode=require" : "");
+
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("spring.datasource.url", jdbcUrl);
+        if (kv.get("username") != null) props.put("spring.datasource.username", kv.get("username"));
+        if (kv.get("password") != null) props.put("spring.datasource.password", kv.get("password"));
+        return props;
     }
 }
